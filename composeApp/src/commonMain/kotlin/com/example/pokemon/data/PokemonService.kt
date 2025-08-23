@@ -1,0 +1,9 @@
+package com.example.pokemon.data
+
+import com.example.pokemon.domain.models.PokemonDetailResponse
+import com.example.pokemon.domain.models.PokemonResponse
+
+interface PokemonService {
+    suspend fun getPokemon(idOrName: String): PokemonDetailResponse
+    suspend fun getPokemons(offset: Int, limit: Int): PokemonResponse
+}
