@@ -112,6 +112,7 @@ fun PokemonListScreen(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 OutlinedTextField(
                     value = uiState.searchQuery,
                     onValueChange = { query ->
