@@ -282,7 +282,7 @@ class PokemonListViewModel(
     }
 
     fun applyFilter(filter: PokemonFilter) {
-        if (filter.selectedTypes.isNotEmpty()) {
+        if (filter.selectedTypes.isNotEmpty() || filter.sortOption != PokemonSortOption.NUMBER) {
             println("Applying filter: $filter")
             currentFilter = filter
             currentPage = 0
