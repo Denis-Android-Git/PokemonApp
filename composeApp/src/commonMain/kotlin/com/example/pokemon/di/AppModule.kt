@@ -2,7 +2,7 @@ package com.example.pokemon.di
 
 import com.example.pokemon.data.PokemonRepository
 import com.example.pokemon.data.PokemonRepositoryImpl
-import com.example.pokemon.data.PokemonService
+import com.example.pokemon.domain.interfaces.PokemonService
 import com.example.pokemon.data.PokemonServiceImpl
 import com.example.pokemon.presentation.PokemonListViewModel
 import org.koin.core.module.Module

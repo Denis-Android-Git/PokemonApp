@@ -1,4 +1,4 @@
-package com.example.pokemon.data
+package com.example.pokemon.domain.interfaces
 
 import com.example.pokemon.domain.models.PokemonDetailResponse
 import com.example.pokemon.domain.models.PokemonResponse

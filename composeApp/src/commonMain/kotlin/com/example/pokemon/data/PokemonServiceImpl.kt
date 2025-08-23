@@ -1,5 +1,6 @@
 package com.example.pokemon.data
 
+import com.example.pokemon.domain.interfaces.PokemonService
 import com.example.pokemon.domain.models.PokemonDetailResponse
 import com.example.pokemon.domain.models.PokemonResponse
 import io.ktor.client.*

@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.example.pokemon.domain.interfaces.PokemonDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 

@@ -1,9 +1,10 @@
-package com.example.pokemon.data
+package com.example.pokemon.domain.interfaces
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.pokemon.data.PokemonEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

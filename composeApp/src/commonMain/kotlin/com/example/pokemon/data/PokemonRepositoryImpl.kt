@@ -1,5 +1,7 @@
 package com.example.pokemon.data
 
+import com.example.pokemon.domain.interfaces.PokemonDao
+import com.example.pokemon.domain.interfaces.PokemonService
 import com.example.pokemon.domain.models.NamedApiResource
 import com.example.pokemon.domain.models.PokemonDetailResponse
 import com.example.pokemon.domain.models.Pokemon
