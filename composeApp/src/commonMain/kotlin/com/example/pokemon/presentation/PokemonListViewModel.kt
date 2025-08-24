@@ -3,15 +3,18 @@ package com.example.pokemon.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pokemon.data.PokemonRepository
+import com.example.pokemon.data.PokemonUtils
 import com.example.pokemon.domain.models.Pokemon
 import com.example.pokemon.domain.models.PokemonFilter
-import com.example.pokemon.data.PokemonUtils
+import com.example.pokemon.data.toPokemon
 import com.example.pokemon.domain.models.PokemonSortOption
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PokemonListViewModel(
@@ -27,8 +30,73 @@ class PokemonListViewModel(
     private var hasMorePages = true
     private var totalPokemonCount = 0
 
+    private val pageLimit = 20
+
+    private val paginator = Paginator(
+        initialKey = 0,
+        onLoadUpdated = { loading ->
+            _uiState.update {
+                it.copy(isLoading = loading)
+            }
+        },
+        onRequest = { currentPage ->
+            val offset = PokemonUtils.calculateOffset(currentPage)
+
+            pokemonRepository.fetchAndCachePokemons(offset, pageLimit)
+        },
+        getNextKey = { currentPage, _ ->
+            currentPage + 1
+        },
+        onError = {
+            _uiState.update {
+                it.copy(error = it.error ?: "Unknown error")
+            }
+        },
+        onSuccess = { response, nextPage ->
+            _uiState.update { state ->
+                state.copy(
+                    pokemons = state.pokemons + response.results.map { it.toPokemon() },
+                    error = null,
+                    isLoading = false,
+                    isEmpty = response.results.isEmpty(),
+                    hasFiltersApplied = false
+                )
+            }
+        },
+        endReached = { currentPage, response ->
+            (currentPage * pageLimit >= response.count)
+
+        }
+    )
+
+    fun loadNextItems() {
+        viewModelScope.launch {
+            try {
+                paginator.loadNextItems()
+            } catch (e: Exception) {
+                pokemonRepository.getPokemonsWithoutPagination()
+                    .stateIn(
+                        viewModelScope,
+                        started = SharingStarted.WhileSubscribed(),
+                        initialValue = emptyList()
+                    ).collect { pokemons ->
+                        _uiState.update {
+                            it.copy(
+                                pokemons = pokemons,
+                                error = null,
+                                isLoading = false,
+                                isEmpty = pokemons.isEmpty(),
+                                hasFiltersApplied = false
+                            )
+                        }
+                    }
+            }
+        }
+    }
+
     init {
-        loadPokemons()
+        loadNextItems()
+        //loadPokemons()
     }
 
     fun clearFilter() {
@@ -36,68 +104,68 @@ class PokemonListViewModel(
             currentFilter = PokemonFilter()
         }
     }
-
-    fun loadPokemons() {
-        if (isLoadingMore) return
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isLoading = true,
-                error = null
-            )
-            delay(100)
-            try {
-                currentPage = 0
-                hasMorePages = true
-
-                val existingCount = pokemonRepository.getPokemonCount()
-                println("Existing pokemons in DB: $existingCount")
-
-                if (existingCount == 0) {
-                    println("No data in DB, loading from API")
-                    val initialLimit = 60
-                    pokemonRepository.fetchAndCachePokemons(0, initialLimit)
-                    val countAfterLoad = pokemonRepository.getPokemonCount()
-                    println("After API fetch, DB contains $countAfterLoad pokemons")
-                } else {
-                    println("Using cached data from DB")
-                }
-
-                val offset = PokemonUtils.calculateOffset(currentPage)
-                val limit = PokemonUtils.POKEMON_PER_PAGE
-
-                println("Loading from DB: page $currentPage with offset=$offset, limit=$limit, search='${_uiState.value.searchQuery}'")
-
-                val pokemons = pokemonRepository.getPokemons(
-                    offset,
-                    limit,
-                    _uiState.value.searchQuery
-                ).first()
-
-                println("Received ${pokemons.size} pokemons for page $currentPage")
-
-                val filteredAndSorted = PokemonUtils.applyFiltersAndSort(pokemons, currentFilter)
-
-                _uiState.value = _uiState.value.copy(
-                    pokemons = filteredAndSorted,
-                    isLoading = false,
-                    isEmpty = filteredAndSorted.isEmpty(),
-                    hasFiltersApplied = false
-                )
-
-                println("Page $currentPage loaded successfully. Total pokemons: ${filteredAndSorted.size}")
-
-                updatePaginationState()
-
-            } catch (e: Exception) {
-                println("Error_loading_Pokemons: ${e.message}")
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message ?: "Unknown error"
-                )
-            }
-        }
-    }
-
+//
+//    fun loadPokemons() {
+//        if (isLoadingMore) return
+//        viewModelScope.launch {
+//            _uiState.value = _uiState.value.copy(
+//                isLoading = true,
+//                error = null
+//            )
+//            delay(100)
+//            try {
+//                currentPage = 0
+//                hasMorePages = true
+//
+//                val existingCount = pokemonRepository.getPokemonCount()
+//                println("Existing pokemons in DB: $existingCount")
+//
+//                if (existingCount == 0) {
+//                    println("No data in DB, loading from API")
+//                    val initialLimit = 60
+//                    pokemonRepository.fetchAndCachePokemons(0, initialLimit)
+//                    val countAfterLoad = pokemonRepository.getPokemonCount()
+//                    println("After API fetch, DB contains $countAfterLoad pokemons")
+//                } else {
+//                    println("Using cached data from DB")
+//                }
+//
+//                val offset = PokemonUtils.calculateOffset(currentPage)
+//                val limit = PokemonUtils.POKEMON_PER_PAGE
+//
+//                println("Loading from DB: page $currentPage with offset=$offset, limit=$limit, search='${_uiState.value.searchQuery}'")
+//
+//                val pokemons = pokemonRepository.getPokemons(
+//                    offset,
+//                    limit,
+//                    _uiState.value.searchQuery
+//                ).first()
+//
+//                println("Received ${pokemons.size} pokemons for page $currentPage")
+//
+//                val filteredAndSorted = PokemonUtils.applyFiltersAndSort(pokemons, currentFilter)
+//
+//                _uiState.value = _uiState.value.copy(
+//                    pokemons = filteredAndSorted,
+//                    isLoading = false,
+//                    isEmpty = filteredAndSorted.isEmpty(),
+//                    hasFiltersApplied = false
+//                )
+//
+//                println("Page $currentPage loaded successfully. Total pokemons: ${filteredAndSorted.size}")
+//
+//                updatePaginationState()
+//
+//            } catch (e: Exception) {
+//                println("Error_loading_Pokemons: ${e.message}")
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = false,
+//                    error = e.message ?: "Unknown error"
+//                )
+//            }
+//        }
+//    }
+//
     private suspend fun updatePaginationState() {
         try {
             totalPokemonCount = pokemonRepository.getPokemonCount(_uiState.value.searchQuery)
@@ -128,7 +196,7 @@ class PokemonListViewModel(
             println("Pagination Fallback: currentSize=$currentSize, hasMorePages=$hasMorePages")
         }
     }
-
+//
     fun onSearchQueryChange(query: String) {
         println("ViewModel: onSearchQueryChange called with query: '$query'")
         _uiState.value = _uiState.value.copy(searchQuery = query)
@@ -174,113 +242,113 @@ class PokemonListViewModel(
             }
         }
     }
-
-    fun loadNextPage() {
-        println("loadNextPage called: isLoadingMore=$isLoadingMore, hasMorePages=$hasMorePages, currentPage=$currentPage")
-        if (!isLoadingMore && hasMorePages) {
-            currentPage++
-            println("Loading next page: $currentPage")
-
-            viewModelScope.launch {
-                try {
-                    isLoadingMore = true
-
-                    val offset = PokemonUtils.calculateOffset(currentPage)
-                    val limit = PokemonUtils.POKEMON_PER_PAGE
-
-                    println("Loading next page with offset=$offset, limit=$limit, search='${_uiState.value.searchQuery}'")
-
-                    val currentCount = pokemonRepository.getPokemonCount(_uiState.value.searchQuery)
-                    val expectedCountForPage = (currentPage + 1) * PokemonUtils.POKEMON_PER_PAGE
-
-                    println("DB check: currentCount=$currentCount, expectedCountForPage=$expectedCountForPage")
-
-                    if (currentCount < expectedCountForPage && _uiState.value.searchQuery.isBlank()) {
-                        println("Not enough data in DB ($currentCount < $expectedCountForPage), trying to fetch from API")
-                        try {
-                            pokemonRepository.fetchAndCachePokemons(offset, limit)
-
-                            delay(500)
-
-                            val countAfterLoad = pokemonRepository.getPokemonCount(_uiState.value.searchQuery)
-                            println("After API fetch: DB contains $countAfterLoad pokemons")
-                        } catch (e: Exception) {
-                            println("Failed to fetch from API: ${e.message}, using cached data only")
-                        }
-                    }
-
-                    val pokemonsFromDb = pokemonRepository.getPokemons(
-                        offset,
-                        limit,
-                        _uiState.value.searchQuery
-                    ).first()
-
-                    println("Next page loaded from DB: ${pokemonsFromDb.size} pokemons")
-
-                    if (pokemonsFromDb.isNotEmpty()) {
-                        val filteredAndSorted = PokemonUtils.applyFiltersAndSort(
-                            pokemonsFromDb,
-                            currentFilter
-                        )
-                        val updatedList = _uiState.value.pokemons.toMutableList().apply {
-                            addAll(
-                                filteredAndSorted
-                            )
-                        }
-
-                        _uiState.value = _uiState.value.copy(
-                            pokemons = updatedList,
-                            isEmpty = updatedList.isEmpty()
-                        )
-
-                    } else {
-                        if (_uiState.value.searchQuery.isBlank()) {
-                            try {
-                                pokemonRepository.fetchAndCachePokemons(offset, limit)
-                                delay(500)
-
-                                val retryPokemons = pokemonRepository.getPokemons(
-                                    offset,
-                                    limit,
-                                    _uiState.value.searchQuery
-                                ).first()
-
-                                if (retryPokemons.isNotEmpty()) {
-                                    val filteredAndSorted = PokemonUtils.applyFiltersAndSort(
-                                        retryPokemons,
-                                        currentFilter
-                                    )
-                                    val updatedList = _uiState.value.pokemons.toMutableList().apply {
-                                        addAll(
-                                            filteredAndSorted
-                                        )
-                                    }
-
-                                    _uiState.value = _uiState.value.copy(
-                                        pokemons = updatedList,
-                                        isEmpty = updatedList.isEmpty()
-                                    )
-
-                                }
-                            } catch (e: Exception) {
-                                println("API fallback failed: ${e.message}")
-                            }
-                        }
-                    }
-
-                    updatePaginationState()
-                    isLoadingMore = false
-
-                } catch (e: Exception) {
-                    println("Error loading next page: ${e.message}")
-                    isLoadingMore = false
-                }
-            }
-        } else {
-            println("Cannot load next page: isLoadingMore=$isLoadingMore, hasMorePages=$hasMorePages")
-        }
-    }
-
+//
+//    fun loadNextPage() {
+//        println("loadNextPage called: isLoadingMore=$isLoadingMore, hasMorePages=$hasMorePages, currentPage=$currentPage")
+//        if (!isLoadingMore && hasMorePages) {
+//            currentPage++
+//            println("Loading next page: $currentPage")
+//
+//            viewModelScope.launch {
+//                try {
+//                    isLoadingMore = true
+//
+//                    val offset = PokemonUtils.calculateOffset(currentPage)
+//                    val limit = PokemonUtils.POKEMON_PER_PAGE
+//
+//                    println("Loading next page with offset=$offset, limit=$limit, search='${_uiState.value.searchQuery}'")
+//
+//                    val currentCount = pokemonRepository.getPokemonCount(_uiState.value.searchQuery)
+//                    val expectedCountForPage = (currentPage + 1) * PokemonUtils.POKEMON_PER_PAGE
+//
+//                    println("DB check: currentCount=$currentCount, expectedCountForPage=$expectedCountForPage")
+//
+//                    if (currentCount < expectedCountForPage && _uiState.value.searchQuery.isBlank()) {
+//                        println("Not enough data in DB ($currentCount < $expectedCountForPage), trying to fetch from API")
+//                        try {
+//                            pokemonRepository.fetchAndCachePokemons(offset, limit)
+//
+//                            delay(500)
+//
+//                            val countAfterLoad = pokemonRepository.getPokemonCount(_uiState.value.searchQuery)
+//                            println("After API fetch: DB contains $countAfterLoad pokemons")
+//                        } catch (e: Exception) {
+//                            println("Failed to fetch from API: ${e.message}, using cached data only")
+//                        }
+//                    }
+//
+//                    val pokemonsFromDb = pokemonRepository.getPokemons(
+//                        offset,
+//                        limit,
+//                        _uiState.value.searchQuery
+//                    ).first()
+//
+//                    println("Next page loaded from DB: ${pokemonsFromDb.size} pokemons")
+//
+//                    if (pokemonsFromDb.isNotEmpty()) {
+//                        val filteredAndSorted = PokemonUtils.applyFiltersAndSort(
+//                            pokemonsFromDb,
+//                            currentFilter
+//                        )
+//                        val updatedList = _uiState.value.pokemons.toMutableList().apply {
+//                            addAll(
+//                                filteredAndSorted
+//                            )
+//                        }
+//
+//                        _uiState.value = _uiState.value.copy(
+//                            pokemons = updatedList,
+//                            isEmpty = updatedList.isEmpty()
+//                        )
+//
+//                    } else {
+//                        if (_uiState.value.searchQuery.isBlank()) {
+//                            try {
+//                                pokemonRepository.fetchAndCachePokemons(offset, limit)
+//                                delay(500)
+//
+//                                val retryPokemons = pokemonRepository.getPokemons(
+//                                    offset,
+//                                    limit,
+//                                    _uiState.value.searchQuery
+//                                ).first()
+//
+//                                if (retryPokemons.isNotEmpty()) {
+//                                    val filteredAndSorted = PokemonUtils.applyFiltersAndSort(
+//                                        retryPokemons,
+//                                        currentFilter
+//                                    )
+//                                    val updatedList = _uiState.value.pokemons.toMutableList().apply {
+//                                        addAll(
+//                                            filteredAndSorted
+//                                        )
+//                                    }
+//
+//                                    _uiState.value = _uiState.value.copy(
+//                                        pokemons = updatedList,
+//                                        isEmpty = updatedList.isEmpty()
+//                                    )
+//
+//                                }
+//                            } catch (e: Exception) {
+//                                println("API fallback failed: ${e.message}")
+//                            }
+//                        }
+//                    }
+//
+//                    updatePaginationState()
+//                    isLoadingMore = false
+//
+//                } catch (e: Exception) {
+//                    println("Error loading next page: ${e.message}")
+//                    isLoadingMore = false
+//                }
+//            }
+//        } else {
+//            println("Cannot load next page: isLoadingMore=$isLoadingMore, hasMorePages=$hasMorePages")
+//        }
+//    }
+//
     fun applyFilter(filter: PokemonFilter) {
         if (filter.selectedTypes.isNotEmpty() || filter.sortOption != PokemonSortOption.NUMBER) {
             println("Applying filter: $filter")
@@ -318,52 +386,52 @@ class PokemonListViewModel(
             }
         }
     }
-
-    fun canLoadMore(): Boolean {
-        val result = !isLoadingMore && hasMorePages
-        return result
-    }
-
-    fun reloadData() {
-        println("Reloading data")
-        viewModelScope.launch {
-            try {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = true,
-                    error = null
-                )
-                currentPage = 0
-                hasMorePages = true
-                val initialLimit = 20
-                pokemonRepository.fetchAndCachePokemons(0, initialLimit)
-
-                val offset = PokemonUtils.calculateOffset(currentPage)
-                val limit = PokemonUtils.POKEMON_PER_PAGE
-
-                val pokemons = pokemonRepository.getPokemons(
-                    offset,
-                    limit,
-                    _uiState.value.searchQuery
-                ).first()
-
-                _uiState.value = _uiState.value.copy(
-                    pokemons = pokemons,
-                    isLoading = false,
-                    isEmpty = pokemons.isEmpty(),
-                    hasFiltersApplied = false
-                )
-
-                updatePaginationState()
-
-            } catch (e: Exception) {
-                println("Error reloading data: ${e.message}")
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message ?: "Unknown error"
-                )
-            }
-        }
-    }
+//
+//    fun canLoadMore(): Boolean {
+//        val result = !isLoadingMore && hasMorePages
+//        return result
+//    }
+//
+//    fun reloadData() {
+//        println("Reloading data")
+//        viewModelScope.launch {
+//            try {
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = true,
+//                    error = null
+//                )
+//                currentPage = 0
+//                hasMorePages = true
+//                val initialLimit = 20
+//                pokemonRepository.fetchAndCachePokemons(0, initialLimit)
+//
+//                val offset = PokemonUtils.calculateOffset(currentPage)
+//                val limit = PokemonUtils.POKEMON_PER_PAGE
+//
+//                val pokemons = pokemonRepository.getPokemons(
+//                    offset,
+//                    limit,
+//                    _uiState.value.searchQuery
+//                ).first()
+//
+//                _uiState.value = _uiState.value.copy(
+//                    pokemons = pokemons,
+//                    isLoading = false,
+//                    isEmpty = pokemons.isEmpty(),
+//                    hasFiltersApplied = false
+//                )
+//
+//                updatePaginationState()
+//
+//            } catch (e: Exception) {
+//                println("Error reloading data: ${e.message}")
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = false,
+//                    error = e.message ?: "Unknown error"
+//                )
+//            }
+//        }
+//    }
 }
 
 data class PokemonListUiState(

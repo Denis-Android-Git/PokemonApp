@@ -18,6 +18,8 @@ class PokemonServiceImpl : PokemonService {
         install(Logging) {
             logger = object : Logger {
                 override fun log(message: String) {
+                    println("HTTP call $message")
+
                 }
             }
             level = LogLevel.ALL

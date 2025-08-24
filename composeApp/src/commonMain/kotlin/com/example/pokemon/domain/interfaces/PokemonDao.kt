@@ -13,11 +13,18 @@ interface PokemonDao {
     @Query("SELECT * FROM pokemons ORDER BY id ASC LIMIT :limit OFFSET :offset")
     fun getPokemonsWithPagination(limit: Int, offset: Int): Flow<List<PokemonEntity>>
 
+    @Query("SELECT * FROM pokemons ORDER BY id ASC")
+    fun getPokemonsWithoutPagination(): Flow<List<PokemonEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(pokemons: List<PokemonEntity>)
 
     @Query("SELECT * FROM pokemons WHERE LOWER(name) LIKE LOWER(:query) ORDER BY id ASC LIMIT :limit OFFSET :offset")
-    fun searchPokemonsWithPagination(query: String, limit: Int, offset: Int): Flow<List<PokemonEntity>>
+    fun searchPokemonsWithPagination(
+        query: String,
+        limit: Int,
+        offset: Int
+    ): Flow<List<PokemonEntity>>
 
     @Query("SELECT COUNT(*) FROM pokemons")
     suspend fun getPokemonCount(): Int

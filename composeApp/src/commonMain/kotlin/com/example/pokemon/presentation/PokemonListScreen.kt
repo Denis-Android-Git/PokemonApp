@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.pokemon.domain.models.Pokemon
 import com.example.pokemon.domain.models.PokemonFilter
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +56,7 @@ fun PokemonListScreen(
 
     LaunchedEffect(currentFilter) {
         println("Screen: Filter changed to: $currentFilter")
-        viewModel.applyFilter(currentFilter)
+        //viewModel.applyFilter(currentFilter)
     }
 
     LaunchedEffect(lazyGridState, uiState.hasFiltersApplied) {
@@ -63,14 +64,28 @@ fun PokemonListScreen(
             snapshotFlow { lazyGridState.layoutInfo.visibleItemsInfo }
                 .collect { visibleItems ->
                     val lastVisibleItem = visibleItems.lastOrNull()
-                    if (lastVisibleItem != null && uiState.pokemons.isNotEmpty() && viewModel.canLoadMore()) {
+                    if (lastVisibleItem != null && uiState.pokemons.isNotEmpty()
+                    //&& viewModel.canLoadMore()
+                    ) {
                         val threshold = uiState.pokemons.size - 4
                         if (lastVisibleItem.index >= threshold) {
-                            viewModel.loadNextPage()
+                            //viewModel.loadNextPage()
                         }
                     }
                 }
         }
+    }
+
+    LaunchedEffect(uiState.pokemons) {
+        snapshotFlow {
+            lazyGridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+        }
+            .distinctUntilChanged()
+            .collect { lastVisibleIndex ->
+                if (lastVisibleIndex == uiState.pokemons.lastIndex) {
+                    viewModel.loadNextItems()
+                }
+            }
     }
 
     LaunchedEffect(uiState) {
@@ -82,7 +97,9 @@ fun PokemonListScreen(
             TopAppBar(
                 title = { Text("Покемоны") },
                 actions = {
-                    IconButton(onClick = { viewModel.reloadData() }) {
+                    IconButton(onClick = {
+                        //viewModel.reloadData()
+                    }) {
                         Icon(
                             Icons.Filled.Refresh,
                             contentDescription = "Перезагрузить данные"
@@ -104,8 +121,8 @@ fun PokemonListScreen(
                 .fillMaxSize(),
             isRefreshing = uiState.isLoading,
             onRefresh = {
-                viewModel.clearFilter()
-                viewModel.loadPokemons()
+//                viewModel.clearFilter()
+//                viewModel.loadPokemons()
             }
         ) {
             Column(
@@ -117,7 +134,7 @@ fun PokemonListScreen(
                     value = uiState.searchQuery,
                     onValueChange = { query ->
                         println("Screen: Search query changed to: '$query'")
-                        viewModel.onSearchQueryChange(query)
+                        //viewModel.onSearchQueryChange(query)
                     },
                     label = { Text("Поиск покемонов") },
                     modifier = Modifier
@@ -126,7 +143,7 @@ fun PokemonListScreen(
                 )
 
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    //CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else if (uiState.isEmpty) {
                     Text("Покемоны не найдены", modifier = Modifier.padding(16.dp))
                 } else if (uiState.error != null) {
@@ -149,22 +166,33 @@ fun PokemonListScreen(
                         items(uiState.pokemons) { pokemon ->
                             PokemonCard(pokemon = pokemon)
                         }
+//                        if (uiState.isLoading) {
+//                            item {
+//                                Box(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth(),
+//                                    contentAlignment = Alignment.Center
+//                                ) {
+//                                    CircularProgressIndicator()
+//                                }
+//                            }
+//                        }
 
-                        if (viewModel.canLoadMore() && uiState.isLoading) {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        strokeWidth = 2.dp
-                                    )
-                                }
-                            }
-                        }
+//                        if (viewModel.canLoadMore() && uiState.isLoading) {
+//                            item {
+//                                Box(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth()
+//                                        .padding(16.dp),
+//                                    contentAlignment = Alignment.Center
+//                                ) {
+//                                    CircularProgressIndicator(
+//                                        modifier = Modifier.size(24.dp),
+//                                        strokeWidth = 2.dp
+//                                    )
+//                                }
+//                            }
+//                        }
                     }
                 }
             }
