@@ -1,5 +1,3 @@
-
-
 package com.example.pokemon
 
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +19,11 @@ fun App() {
             composable("pokemon_list") {
                 PokemonListScreen(
                     onNavigateToFilter = { navController.navigate("filter_screen") },
-                    currentFilter = currentFilter
+                    currentFilter = currentFilter,
+                    onRefresh = {
+                        currentFilter = PokemonFilter()
+                        navController.navigate("pokemon_list")
+                    }
                 )
             }
             composable("filter_screen") {
@@ -29,7 +31,7 @@ fun App() {
                     onNavigateBack = { navController.popBackStack() },
                     onApplyFilter = { filter ->
                         currentFilter = filter
-                         navController.popBackStack()
+                        navController.popBackStack()
                     }
                 )
             }

@@ -15,7 +15,7 @@ class Paginator<Key, Item>(
     private var isEndReached = false
 
     suspend fun loadNextItems() {
-        if(isMakingRequest || isEndReached) {
+        if (isMakingRequest || isEndReached) {
             return
         }
 

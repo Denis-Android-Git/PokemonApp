@@ -2,7 +2,6 @@ package com.example.pokemon.presentation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +46,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun PokemonListScreen(
     onNavigateToFilter: () -> Unit,
     currentFilter: PokemonFilter,
+    onRefresh: () -> Unit,
     viewModel: PokemonListViewModel = koinViewModel()
 ) {
 
@@ -56,24 +55,7 @@ fun PokemonListScreen(
 
     LaunchedEffect(currentFilter) {
         println("Screen: Filter changed to: $currentFilter")
-        //viewModel.applyFilter(currentFilter)
-    }
-
-    LaunchedEffect(lazyGridState, uiState.hasFiltersApplied) {
-        if (!uiState.hasFiltersApplied) {
-            snapshotFlow { lazyGridState.layoutInfo.visibleItemsInfo }
-                .collect { visibleItems ->
-                    val lastVisibleItem = visibleItems.lastOrNull()
-                    if (lastVisibleItem != null && uiState.pokemons.isNotEmpty()
-                    //&& viewModel.canLoadMore()
-                    ) {
-                        val threshold = uiState.pokemons.size - 4
-                        if (lastVisibleItem.index >= threshold) {
-                            //viewModel.loadNextPage()
-                        }
-                    }
-                }
-        }
+        viewModel.applyFilter(currentFilter)
     }
 
     LaunchedEffect(uiState.pokemons) {
@@ -82,7 +64,8 @@ fun PokemonListScreen(
         }
             .distinctUntilChanged()
             .collect { lastVisibleIndex ->
-                if (lastVisibleIndex == uiState.pokemons.lastIndex) {
+                if (lastVisibleIndex == uiState.pokemons.lastIndex && currentFilter.selectedTypes.isEmpty()) {
+                    println("Screen: Reached end of list, loading more items")
                     viewModel.loadNextItems()
                 }
             }
@@ -99,6 +82,7 @@ fun PokemonListScreen(
                 actions = {
                     IconButton(onClick = {
                         //viewModel.reloadData()
+                        onRefresh()
                     }) {
                         Icon(
                             Icons.Filled.Refresh,
@@ -121,8 +105,9 @@ fun PokemonListScreen(
                 .fillMaxSize(),
             isRefreshing = uiState.isLoading,
             onRefresh = {
-//                viewModel.clearFilter()
-//                viewModel.loadPokemons()
+                viewModel.clearFilter()
+                onRefresh()
+                //viewModel.reloadData()
             }
         ) {
             Column(
@@ -134,7 +119,7 @@ fun PokemonListScreen(
                     value = uiState.searchQuery,
                     onValueChange = { query ->
                         println("Screen: Search query changed to: '$query'")
-                        //viewModel.onSearchQueryChange(query)
+                        viewModel.onSearchQueryChange(query)
                     },
                     label = { Text("Поиск покемонов") },
                     modifier = Modifier
@@ -142,9 +127,7 @@ fun PokemonListScreen(
                         .padding(8.dp)
                 )
 
-                if (uiState.isLoading) {
-                    //CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                } else if (uiState.isEmpty) {
+                if (uiState.isEmpty) {
                     Text("Покемоны не найдены", modifier = Modifier.padding(16.dp))
                 } else if (uiState.error != null) {
                     val errorMessage = when (uiState.error) {
@@ -166,33 +149,6 @@ fun PokemonListScreen(
                         items(uiState.pokemons) { pokemon ->
                             PokemonCard(pokemon = pokemon)
                         }
-//                        if (uiState.isLoading) {
-//                            item {
-//                                Box(
-//                                    modifier = Modifier
-//                                        .fillMaxWidth(),
-//                                    contentAlignment = Alignment.Center
-//                                ) {
-//                                    CircularProgressIndicator()
-//                                }
-//                            }
-//                        }
-
-//                        if (viewModel.canLoadMore() && uiState.isLoading) {
-//                            item {
-//                                Box(
-//                                    modifier = Modifier
-//                                        .fillMaxWidth()
-//                                        .padding(16.dp),
-//                                    contentAlignment = Alignment.Center
-//                                ) {
-//                                    CircularProgressIndicator(
-//                                        modifier = Modifier.size(24.dp),
-//                                        strokeWidth = 2.dp
-//                                    )
-//                                }
-//                            }
-//                        }
                     }
                 }
             }
