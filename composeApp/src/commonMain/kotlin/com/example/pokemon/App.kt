@@ -1,13 +1,17 @@
 package com.example.pokemon
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.pokemon.domain.models.PokemonFilter
 import com.example.pokemon.presentation.FilterScreen
-import com.example.pokemon.presentation.PokemonListScreen
+import com.example.pokemon.presentation.PokemonListScreenState
 
 @Composable
 fun App() {
@@ -17,7 +21,7 @@ fun App() {
 
         NavHost(navController = navController, startDestination = "pokemon_list") {
             composable("pokemon_list") {
-                PokemonListScreen(
+                PokemonListScreenState(
                     onNavigateToFilter = { navController.navigate("filter_screen") },
                     currentFilter = currentFilter,
                     onRefresh = {

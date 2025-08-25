@@ -5,12 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.pokemon.data.PokemonRepository
 import com.example.pokemon.data.PokemonUtils
 import com.example.pokemon.data.toPokemon
-import com.example.pokemon.domain.models.Pokemon
 import com.example.pokemon.domain.models.PokemonFilter
+import com.example.pokemon.domain.models.PokemonListUiState
 import com.example.pokemon.domain.models.PokemonSortOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -22,7 +21,7 @@ class PokemonListViewModel(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PokemonListUiState())
-    val uiState: StateFlow<PokemonListUiState> = _uiState.asStateFlow()
+    val uiState = _uiState.asStateFlow()
 
     private var currentPage = 0
     private var currentFilter: PokemonFilter = PokemonFilter()
@@ -235,12 +234,3 @@ class PokemonListViewModel(
         }
     }
 }
-
-data class PokemonListUiState(
-    val pokemons: List<Pokemon> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val searchQuery: String = "",
-    val isEmpty: Boolean = false,
-    val hasFiltersApplied: Boolean = false
-)

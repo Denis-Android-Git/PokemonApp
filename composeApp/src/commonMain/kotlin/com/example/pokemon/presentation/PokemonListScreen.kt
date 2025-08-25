@@ -29,17 +29,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.pokemon.domain.models.Pokemon
 import com.example.pokemon.domain.models.PokemonFilter
+import com.example.pokemon.domain.models.PokemonListUiState
 import kotlinx.coroutines.flow.distinctUntilChanged
-import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,15 +46,17 @@ fun PokemonListScreen(
     onNavigateToFilter: () -> Unit,
     currentFilter: PokemonFilter,
     onRefresh: () -> Unit,
-    viewModel: PokemonListViewModel = koinViewModel()
+    uiState: PokemonListUiState,
+    onApplyFilter: (PokemonFilter) -> Unit,
+    onLoadNextItems: () -> Unit,
+    onClearFilter: () -> Unit,
+    onSearchQueryChange: (String) -> Unit
 ) {
-
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lazyGridState = rememberLazyGridState()
 
     LaunchedEffect(currentFilter) {
         println("Screen: Filter changed to: $currentFilter")
-        viewModel.applyFilter(currentFilter)
+        onApplyFilter(currentFilter)
     }
 
     LaunchedEffect(uiState.pokemons) {
@@ -66,7 +67,7 @@ fun PokemonListScreen(
             .collect { lastVisibleIndex ->
                 if (lastVisibleIndex == uiState.pokemons.lastIndex && currentFilter.selectedTypes.isEmpty() && uiState.searchQuery == "") {
                     println("Screen: Reached end of list, loading more items")
-                    viewModel.loadNextItems()
+                    onLoadNextItems()
                 }
             }
     }
@@ -81,7 +82,6 @@ fun PokemonListScreen(
                 title = { Text("Покемоны") },
                 actions = {
                     IconButton(onClick = {
-                        //viewModel.reloadData()
                         onRefresh()
                     }) {
                         Icon(
@@ -105,9 +105,8 @@ fun PokemonListScreen(
                 .fillMaxSize(),
             isRefreshing = uiState.isLoading,
             onRefresh = {
-                viewModel.clearFilter()
+                onClearFilter()
                 onRefresh()
-                //viewModel.reloadData()
             }
         ) {
             Column(
@@ -119,7 +118,7 @@ fun PokemonListScreen(
                     value = uiState.searchQuery,
                     onValueChange = { query ->
                         println("Screen: Search query changed to: '$query'")
-                        viewModel.onSearchQueryChange(query)
+                        onSearchQueryChange(query)
                     },
                     label = { Text("Поиск покемонов") },
                     modifier = Modifier
@@ -156,6 +155,71 @@ fun PokemonListScreen(
     }
 }
 
+
+@Preview
+@Composable
+private fun PokemonListScreenPreview() {
+    MaterialTheme {
+        PokemonListScreen(
+            onNavigateToFilter = {},
+            currentFilter = PokemonFilter(),
+            onRefresh = {},
+            uiState = PokemonListUiState(
+                pokemons = listOf(
+                    Pokemon(
+                        id = 1,
+                        name = "Pikachu",
+                        imageUrl = "https://example.com/pikachu.png",
+                        types = listOf("Electric"),
+                        hp = 35,
+                        attack = 55,
+                        defense = 40
+                    ),
+                    Pokemon(
+                        id = 2,
+                        name = "Charmander",
+                        imageUrl = "https://example.com/charmander.png",
+                        types = listOf("Fire"),
+                        hp = 39,
+                        attack = 52,
+                        defense = 43
+                    )
+                ),
+                isLoading = false,
+                isEmpty = false,
+                error = null,
+                searchQuery = ""
+            ),
+            onApplyFilter = {},
+            onLoadNextItems = {},
+            onClearFilter = {},
+            onSearchQueryChange = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PokemonListScreenLoadingPreview() {
+    MaterialTheme {
+        PokemonListScreen(
+            onNavigateToFilter = {},
+            currentFilter = PokemonFilter(),
+            onRefresh = {},
+            uiState = PokemonListUiState(
+                pokemons = emptyList(),
+                isLoading = true,
+                isEmpty = false,
+                error = null,
+                searchQuery = ""
+            ),
+            onApplyFilter = {},
+            onLoadNextItems = {},
+            onClearFilter = {},
+            onSearchQueryChange = {}
+        )
+    }
+}
 @Composable
 fun PokemonCard(pokemon: Pokemon) {
     Card(

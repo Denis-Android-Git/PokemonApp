@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.example.pokemon.domain.models.PokemonFilter
 import com.example.pokemon.domain.models.PokemonSortOption
 import com.example.pokemon.domain.models.PokemonFilterType
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +93,7 @@ fun FilterScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -134,9 +135,9 @@ fun FilterScreen(
                                 }
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         ExposedDropdownMenuBox(
                             expanded = showSortOptions,
                             onExpandedChange = { showSortOptions = !showSortOptions }
@@ -151,7 +152,7 @@ fun FilterScreen(
                                     .fillMaxWidth()
                                     .menuAnchor()
                             )
-                            
+
                             ExposedDropdownMenu(
                                 expanded = showSortOptions,
                                 onDismissRequest = { showSortOptions = false }
@@ -170,7 +171,7 @@ fun FilterScreen(
                     }
                 }
             }
-            
+
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -185,14 +186,14 @@ fun FilterScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         Text(
                             text = "Выберите типы Pokémon для фильтрации:",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         LazyColumn(
                             modifier = Modifier.height(250.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -221,7 +222,7 @@ fun FilterScreen(
                     }
                 }
             }
-            
+
             item {
                 Button(
                     onClick = {
@@ -238,7 +239,7 @@ fun FilterScreen(
                     Text("Применить фильтр")
                 }
             }
-            
+
             item {
                 OutlinedButton(
                     onClick = {
@@ -253,6 +254,15 @@ fun FilterScreen(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun FilterScreenPreview() {
+    FilterScreen(
+        onNavigateBack = {},
+        onApplyFilter = {}
+    )
 }
 
 @Composable
@@ -274,7 +284,7 @@ private fun TypeChip(
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
-    
+
     Box(
         modifier = Modifier
             .height(40.dp)
