@@ -110,55 +110,6 @@ class PokemonListViewModel(
         }
     }
 
-    fun reloadData() {
-        println("Reloading data")
-        viewModelScope.launch {
-            try {
-                _uiState.update {
-                    it.copy(
-                        isLoading = true,
-                        error = null,
-                        pokemons = emptyList()
-                    )
-                }
-                val result = pokemonRepository.fetchPokemons(0, pageLimit)
-
-                when {
-                    result.isSuccess -> {
-                        val newList = result.getOrNull()?.results?.map { it.toPokemon() } ?: emptyList()
-                        _uiState.update { state ->
-                            state.copy(
-                                pokemons = newList,
-                                error = null,
-                                isLoading = false,
-                                isEmpty = result.getOrNull()?.results?.isEmpty() == true,
-                                hasFiltersApplied = false
-                            )
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                println("Error reloading data: ${e.message}")
-                pokemonRepository.getPokemonsWithoutPagination()
-                    .stateIn(
-                        viewModelScope,
-                        started = SharingStarted.WhileSubscribed(),
-                        initialValue = emptyList()
-                    ).collect { pokemons ->
-                        _uiState.update {
-                            it.copy(
-                                pokemons = pokemons,
-                                error = null,
-                                isLoading = false,
-                                isEmpty = pokemons.isEmpty(),
-                                hasFiltersApplied = false
-                            )
-                        }
-                    }
-            }
-        }
-    }
-
     fun clearFilter() {
         viewModelScope.launch {
             currentFilter = PokemonFilter()
