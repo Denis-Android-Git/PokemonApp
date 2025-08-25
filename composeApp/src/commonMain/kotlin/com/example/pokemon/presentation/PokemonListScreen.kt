@@ -64,7 +64,7 @@ fun PokemonListScreen(
         }
             .distinctUntilChanged()
             .collect { lastVisibleIndex ->
-                if (lastVisibleIndex == uiState.pokemons.lastIndex && currentFilter.selectedTypes.isEmpty()) {
+                if (lastVisibleIndex == uiState.pokemons.lastIndex && currentFilter.selectedTypes.isEmpty() && uiState.searchQuery == "") {
                     println("Screen: Reached end of list, loading more items")
                     viewModel.loadNextItems()
                 }
