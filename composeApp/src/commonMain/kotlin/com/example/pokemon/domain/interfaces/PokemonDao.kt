@@ -1,5 +1,6 @@
 package com.example.pokemon.domain.interfaces
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -12,6 +13,9 @@ interface PokemonDao {
 
     @Query("SELECT * FROM pokemons ORDER BY id ASC LIMIT :limit OFFSET :offset")
     fun getPokemonsWithPagination(limit: Int, offset: Int): Flow<List<PokemonEntity>>
+
+    @Query("SELECT * FROM pokemons ORDER BY id ASC")
+    fun getPokemonsWithPagingSource(): PagingSource<Int, PokemonEntity>
 
     @Query("SELECT * FROM pokemons ORDER BY id ASC")
     fun getPokemonsWithoutPagination(): Flow<List<PokemonEntity>>
@@ -34,4 +38,7 @@ interface PokemonDao {
 
     @Query("DELETE FROM pokemons")
     suspend fun clearPokemons()
+
+    @Query("DELETE FROM pokemons WHERE id LIKE :query")
+    suspend fun deleteByQuery(query: Int)
 }

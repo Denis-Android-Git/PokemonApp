@@ -2,6 +2,8 @@ package com.example.pokemon.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.example.pokemon.data.PokemonRepository
 import com.example.pokemon.data.PokemonUtils
 import com.example.pokemon.data.toPokemon
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
 
 class PokemonListViewModel(
     private val pokemonRepository: PokemonRepository
@@ -77,10 +80,13 @@ class PokemonListViewModel(
         }
     )
 
-    init {
-        println("loadNextItems_vm: viewModel init!!!")
-        loadNextItems()
-    }
+    val pokemonsPagedData = pokemonRepository.getPagedPokemonsFromDbViaNetwork(PokemonUtils.POKEMON_PER_PAGE)
+        .cachedIn(viewModelScope)
+
+//    init {
+//        println("loadNextItems_vm: viewModel init!!!")
+//        loadNextItems()
+//    }
 
     fun loadNextItems() {
         viewModelScope.launch {

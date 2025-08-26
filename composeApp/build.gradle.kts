@@ -38,6 +38,8 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
+            implementation(libs.androidx.paging.runtime)
+            implementation(libs.androidx.paging.compose)
         }
 
         commonMain.dependencies {
@@ -60,9 +62,17 @@ kotlin {
             api(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
+            //Paging
+            implementation(libs.paging.common)
+            implementation(libs.paging.compose.common)
+            implementation(libs.androidx.room.paging)
+
         }
         nativeMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.paging.runtime.uikit)
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

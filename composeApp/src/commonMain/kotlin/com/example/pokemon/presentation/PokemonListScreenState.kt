@@ -3,6 +3,7 @@ package com.example.pokemon.presentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.cash.paging.compose.collectAsLazyPagingItems
 import com.example.pokemon.domain.models.PokemonFilter
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -14,6 +15,8 @@ fun PokemonListScreenState(
     viewModel: PokemonListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val pagedPokemons = viewModel.pokemonsPagedData.collectAsLazyPagingItems()
 
     PokemonListScreen(
         onNavigateToFilter = onNavigateToFilter,
@@ -31,6 +34,7 @@ fun PokemonListScreenState(
         },
         onSearchQueryChange = {
             viewModel.onSearchQueryChange(it)
-        }
+        },
+        pagedPokemons = pagedPokemons
     )
 }

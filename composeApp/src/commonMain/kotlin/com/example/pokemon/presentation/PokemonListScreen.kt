@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -33,7 +32,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.cash.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
+import com.example.pokemon.data.PokemonEntity
+import com.example.pokemon.data.toDomain
 import com.example.pokemon.domain.models.Pokemon
 import com.example.pokemon.domain.models.PokemonFilter
 import com.example.pokemon.domain.models.PokemonListUiState
@@ -50,7 +52,8 @@ fun PokemonListScreen(
     onApplyFilter: (PokemonFilter) -> Unit,
     onLoadNextItems: () -> Unit,
     onClearFilter: () -> Unit,
-    onSearchQueryChange: (String) -> Unit
+    onSearchQueryChange: (String) -> Unit,
+    pagedPokemons: LazyPagingItems<PokemonEntity>?
 ) {
     val lazyGridState = rememberLazyGridState()
 
@@ -145,8 +148,18 @@ fun PokemonListScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(uiState.pokemons) { pokemon ->
-                            PokemonCard(pokemon = pokemon)
+                        items(
+                            pagedPokemons?.itemCount ?: 0,
+                            key = {
+                                it
+                            }
+                            //uiState.pokemons
+                        ) { index ->
+                            //pokemon ->
+                            pagedPokemons?.get(index)?.let { pokemon ->
+
+                                PokemonCard(pokemon = pokemon.toDomain())
+                            }
                         }
                     }
                 }
@@ -154,7 +167,6 @@ fun PokemonListScreen(
         }
     }
 }
-
 
 @Preview
 @Composable
@@ -193,7 +205,8 @@ private fun PokemonListScreenPreview() {
             onApplyFilter = {},
             onLoadNextItems = {},
             onClearFilter = {},
-            onSearchQueryChange = {}
+            onSearchQueryChange = {},
+            pagedPokemons = null
         )
     }
 }
@@ -216,10 +229,12 @@ private fun PokemonListScreenLoadingPreview() {
             onApplyFilter = {},
             onLoadNextItems = {},
             onClearFilter = {},
-            onSearchQueryChange = {}
+            onSearchQueryChange = {},
+            pagedPokemons = null
         )
     }
 }
+
 @Composable
 fun PokemonCard(pokemon: Pokemon) {
     Card(

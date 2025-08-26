@@ -1,5 +1,9 @@
 package com.example.pokemon.data
 
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.example.pokemon.domain.interfaces.PokemonDao
 import com.example.pokemon.domain.interfaces.PokemonService
 import com.example.pokemon.domain.models.NamedApiResource
@@ -13,6 +17,14 @@ class PokemonRepositoryImpl(
     private val pokemonService: PokemonService,
     private val pokemonDao: PokemonDao
 ) : PokemonRepository {
+
+    @OptIn(ExperimentalPagingApi::class)
+    override fun getPagedPokemonsFromDbViaNetwork(pageSize: Int) = Pager(
+        config = PagingConfig(pageSize),
+        remoteMediator = MyRemoteMediator(pokemonDao, pokemonService)
+    ) {
+        pokemonDao.getPokemonsWithPagingSource()
+    }.flow
 
     override fun getPokemons(offset: Int, limit: Int, search: String?): Flow<List<Pokemon>> {
         return if (search.isNullOrBlank()) {
@@ -88,6 +100,10 @@ class PokemonRepositoryImpl(
 }
 
 interface PokemonRepository {
+    fun getPagedPokemonsFromDbViaNetwork(
+        pageSize: Int
+    ): Flow<PagingData<PokemonEntity>>
+
     fun getPokemons(offset: Int, limit: Int, search: String? = null): Flow<List<Pokemon>>
 
     fun getPokemonsWithoutPagination(): Flow<List<Pokemon>>
