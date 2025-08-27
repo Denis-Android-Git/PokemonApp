@@ -1,9 +1,9 @@
 package com.example.pokemon.data
 
-import androidx.paging.ExperimentalPagingApi
-import androidx.paging.LoadType
-import androidx.paging.PagingState
-import androidx.paging.RemoteMediator
+import app.cash.paging.ExperimentalPagingApi
+import app.cash.paging.LoadType
+import app.cash.paging.PagingState
+import app.cash.paging.RemoteMediator
 import coil3.network.HttpException
 import com.example.pokemon.domain.interfaces.PokemonDao
 import com.example.pokemon.domain.interfaces.PokemonService
@@ -18,44 +18,48 @@ class MyRemoteMediator(
     private val networkService: PokemonService
 ) : RemoteMediator<Int, PokemonEntity>() {
 
-    private var currentPage = 0
+    private var nextOffset: Int? = null
 
-    @OptIn(ExperimentalPagingApi::class)
+    @OptIn(ExperimentalPagingApi::class, ExperimentalPagingApi::class)
     override suspend fun load(
         loadType: LoadType,
         state: PagingState<Int, PokemonEntity>
     ): MediatorResult {
 
         return try {
-            when (loadType) {
+
+            val offset = when (loadType) {
                 LoadType.REFRESH -> {
-                    currentPage = 0
+                    println("Mediator: Refreshing data")
+                    0
                 }
 
-                LoadType.PREPEND ->
+                LoadType.PREPEND -> {
+                    println("Mediator: Prepending data")
                     return MediatorResult.Success(endOfPaginationReached = true)
+                }
 
                 LoadType.APPEND -> {
-                    val lastItem = state.lastItemOrNull()
-                    if (lastItem == null) {
-                        return MediatorResult.Success(
-                            endOfPaginationReached = true
-                        )
-                    }
-                    currentPage++
+                    println("Mediator: Appending data, nextOffset: $nextOffset")
+                    nextOffset ?: return MediatorResult.Success(endOfPaginationReached = true)
+
                 }
             }
 
-            val offset = PokemonUtils.calculateOffset(currentPage)
+            println("Mediator: Loading page: ${offset / PokemonUtils.POKEMON_PER_PAGE}")
+
             val response = networkService.getPokemons(
                 offset = offset,
                 limit = PokemonUtils.POKEMON_PER_PAGE
             )
+            nextOffset = PokemonUtils.extractOffsetFromUrl(response.next)
+            println("Mediator: Next offset from API: $nextOffset")
 
             withContext(Dispatchers.IO) {
-                if (loadType == LoadType.REFRESH) {
-                    pokemonDao.clearPokemons()
-                }
+                println("Mediator: Inserting data for page: $offset")
+//                if (loadType == LoadType.REFRESH) {
+//                    pokemonDao.clearPokemons()
+//                }
                 val problematicPokemon = setOf("swinub", "piloswine", "mamoswine")
                 val pokemonEntities = mutableListOf<PokemonEntity>()
                 response.results.forEach { (name, _) ->
@@ -67,10 +71,11 @@ class MyRemoteMediator(
                 }
                 pokemonDao.insertAll(pokemonEntities)
             }
-
+            println("Mediator: Page ${offset / PokemonUtils.POKEMON_PER_PAGE} loaded, results: ${response.results.size}, next: ${response.next}, endOfPagination: ${response.next == null}")
             MediatorResult.Success(
-                endOfPaginationReached = response.results.isEmpty()
+                endOfPaginationReached = response.next == null
             )
+
         } catch (e: IOException) {
             MediatorResult.Error(e)
         } catch (e: HttpException) {

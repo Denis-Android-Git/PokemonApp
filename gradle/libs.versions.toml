@@ -13,8 +13,6 @@ composeMultiplatform = "1.9.0-beta03"
 junit = "4.13.2"
 kotlin = "2.2.10"
 kotlinSerialization = "1.9.0"
-pagingComposeCommon = "3.3.0-alpha02-0.5.1"
-pagingRuntime = "3.3.6"
 roomRuntime = "2.7.2"
 sqlite = "2.5.2"
 materialIconsCore = "1.7.3"
@@ -24,6 +22,9 @@ navigationCompose = "2.9.0-beta05"
 ksp = "2.2.10-2.0.2"
 koin = "4.1.0"
 koinComposeMultiplatform = "4.1.0"
+
+androidx-paging = "3.3.6"
+multiplatform-paging = "3.3.0-alpha02-0.5.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -47,13 +48,12 @@ material-icons-core = { module = "org.jetbrains.compose.material:material-icons-
 room-runtime-android = { module = "androidx.room:room-runtime-android", version.ref = "roomRuntime" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 #Paging
-paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagingComposeCommon" }
-paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingComposeCommon" }
+paging-multiplatform-common = { module = "app.cash.paging:paging-common", version.ref = "multiplatform-paging" }
+paging-multiplatform-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "multiplatform-paging" }
+paging-android = { module = "androidx.paging:paging-runtime", version.ref = "androidx-paging" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging" }
+paging-uikit = { module = "app.cash.paging:paging-runtime-uikit", version.ref = "multiplatform-paging" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "roomRuntime" }
-androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingRuntime" }
-androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "pagingRuntime" }
-paging-runtime-uikit = { module = "app.cash.paging:paging-runtime-uikit", version.ref = "pagingComposeCommon" }
-
 
 
 

@@ -2,22 +2,15 @@ package com.example.pokemon.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import com.example.pokemon.data.PokemonRepository
 import com.example.pokemon.data.PokemonUtils
-import com.example.pokemon.data.toPokemon
 import com.example.pokemon.domain.models.PokemonFilter
 import com.example.pokemon.domain.models.PokemonListUiState
 import com.example.pokemon.domain.models.PokemonSortOption
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.emptyList
 
 class PokemonListViewModel(
     private val pokemonRepository: PokemonRepository
@@ -31,89 +24,88 @@ class PokemonListViewModel(
     private var hasMorePages = true
     private var totalPokemonCount = 0
 
-    private val pageLimit = 20
+    //private val pageLimit = 20
 
-    private val paginator = Paginator(
-        initialKey = 0,
-        onLoadUpdated = { loading ->
-            println("loadNextItems_vm: paginator onLoadUpdated")
-            _uiState.update {
-                it.copy(isLoading = loading)
-            }
-        },
-        onRequest = { currentPage ->
-            println("loadNextItems_vm: paginator onRequest")
+//    private val paginator = Paginator(
+//        initialKey = 0,
+//        onLoadUpdated = { loading ->
+//            println("loadNextItems_vm: paginator onLoadUpdated")
+//            _uiState.update {
+//                it.copy(isLoading = loading)
+//            }
+//        },
+//        onRequest = { currentPage ->
+//            println("loadNextItems_vm: paginator onRequest")
+//
+//            val offset = PokemonUtils.calculateOffset(currentPage)
+//
+//            pokemonRepository.fetchAndCachePokemons(offset, pageLimit)
+//        },
+//        getNextKey = { currentPage, _ ->
+//            println("loadNextItems_vm: paginator getNextKey")
+//
+//            currentPage + 1
+//        },
+//        onError = {
+//            println("loadNextItems_vm: paginator onError")
+//
+//            _uiState.update {
+//                it.copy(error = it.error ?: "Unknown error")
+//            }
+//        },
+//        onSuccess = { response, nextPage ->
+//            println("loadNextItems_vm: paginator onSuccess")
+//
+//            _uiState.update { state ->
+//                state.copy(
+//                    pokemons = state.pokemons + response.results.map { it.toPokemon() },
+//                    error = null,
+//                    isLoading = false,
+//                    isEmpty = response.results.isEmpty(),
+//                    hasFiltersApplied = false
+//                )
+//            }
+//        },
+//        endReached = { currentPage, response ->
+//            println("loadNextItems_vm: paginator endReached")
+//            (currentPage * pageLimit >= response.count)
+//
+//        }
+//    )
 
-            val offset = PokemonUtils.calculateOffset(currentPage)
-
-            pokemonRepository.fetchAndCachePokemons(offset, pageLimit)
-        },
-        getNextKey = { currentPage, _ ->
-            println("loadNextItems_vm: paginator getNextKey")
-
-            currentPage + 1
-        },
-        onError = {
-            println("loadNextItems_vm: paginator onError")
-
-            _uiState.update {
-                it.copy(error = it.error ?: "Unknown error")
-            }
-        },
-        onSuccess = { response, nextPage ->
-            println("loadNextItems_vm: paginator onSuccess")
-
-            _uiState.update { state ->
-                state.copy(
-                    pokemons = state.pokemons + response.results.map { it.toPokemon() },
-                    error = null,
-                    isLoading = false,
-                    isEmpty = response.results.isEmpty(),
-                    hasFiltersApplied = false
-                )
-            }
-        },
-        endReached = { currentPage, response ->
-            println("loadNextItems_vm: paginator endReached")
-            (currentPage * pageLimit >= response.count)
-
-        }
-    )
-
-    val pokemonsPagedData = pokemonRepository.getPagedPokemonsFromDbViaNetwork(PokemonUtils.POKEMON_PER_PAGE)
-        .cachedIn(viewModelScope)
+    val pokemonsPagedData = pokemonRepository.getPagedPokemonsFromDbViaNetwork(PokemonUtils.POKEMON_PER_PAGE).flow
 
 //    init {
 //        println("loadNextItems_vm: viewModel init!!!")
-//        loadNextItems()
+//        //loadNextItems()
 //    }
 
-    fun loadNextItems() {
-        viewModelScope.launch {
-            try {
-                paginator.loadNextItems()
-                println("loadNextItems_vm: Loading next items")
-            } catch (_: Exception) {
-                println("loadNextItems_vm: Error loading next items")
-                pokemonRepository.getPokemonsWithoutPagination()
-                    .stateIn(
-                        viewModelScope,
-                        started = SharingStarted.WhileSubscribed(),
-                        initialValue = emptyList()
-                    ).collect { pokemons ->
-                        _uiState.update {
-                            it.copy(
-                                pokemons = pokemons,
-                                error = null,
-                                isLoading = false,
-                                isEmpty = pokemons.isEmpty(),
-                                hasFiltersApplied = false
-                            )
-                        }
-                    }
-            }
-        }
-    }
+//    fun loadNextItems() {
+//        viewModelScope.launch {
+//            try {
+//                paginator.loadNextItems()
+//                println("loadNextItems_vm: Loading next items")
+//            } catch (_: Exception) {
+//                println("loadNextItems_vm: Error loading next items")
+//                pokemonRepository.getPokemonsWithoutPagination()
+//                    .stateIn(
+//                        viewModelScope,
+//                        started = SharingStarted.WhileSubscribed(),
+//                        initialValue = emptyList()
+//                    ).collect { pokemons ->
+//                        _uiState.update {
+//                            it.copy(
+//                                pokemons = pokemons,
+//                                error = null,
+//                                isLoading = false,
+//                                isEmpty = pokemons.isEmpty(),
+//                                hasFiltersApplied = false
+//                            )
+//                        }
+//                    }
+//            }
+//        }
+//    }
 
     fun clearFilter() {
         viewModelScope.launch {
@@ -175,7 +167,10 @@ class PokemonListViewModel(
 
                 println("Search returned ${pokemons.size} pokemons for query: '$query'")
 
-                val filteredAndSorted = PokemonUtils.applyFiltersAndSort(pokemons, currentFilter)
+                val filteredAndSorted = PokemonUtils.applyFiltersAndSort(
+                    pokemons,
+                    currentFilter
+                )
 
                 _uiState.value = _uiState.value.copy(
                     pokemons = filteredAndSorted,

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -28,18 +29,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import app.cash.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
 import com.example.pokemon.data.PokemonEntity
 import com.example.pokemon.data.toDomain
 import com.example.pokemon.domain.models.Pokemon
 import com.example.pokemon.domain.models.PokemonFilter
 import com.example.pokemon.domain.models.PokemonListUiState
-import kotlinx.coroutines.flow.distinctUntilChanged
+import com.example.pokemon.domain.models.PokemonSortOption
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,30 +49,34 @@ fun PokemonListScreen(
     onRefresh: () -> Unit,
     uiState: PokemonListUiState,
     onApplyFilter: (PokemonFilter) -> Unit,
-    onLoadNextItems: () -> Unit,
+    //onLoadNextItems: () -> Unit,
     onClearFilter: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
     pagedPokemons: LazyPagingItems<PokemonEntity>?
 ) {
     val lazyGridState = rememberLazyGridState()
+    val isPagingLoading =
+        pagedPokemons?.loadState?.refresh is androidx.paging.LoadState.Loading ||
+                pagedPokemons?.loadState?.append is androidx.paging.LoadState.Loading
 
+    println("isPagingLoading: $isPagingLoading")
     LaunchedEffect(currentFilter) {
         println("Screen: Filter changed to: $currentFilter")
         onApplyFilter(currentFilter)
     }
 
-    LaunchedEffect(uiState.pokemons) {
-        snapshotFlow {
-            lazyGridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-        }
-            .distinctUntilChanged()
-            .collect { lastVisibleIndex ->
-                if (lastVisibleIndex == uiState.pokemons.lastIndex && currentFilter.selectedTypes.isEmpty() && uiState.searchQuery == "") {
-                    println("Screen: Reached end of list, loading more items")
-                    onLoadNextItems()
-                }
-            }
-    }
+//    LaunchedEffect(uiState.pokemons) {
+//        snapshotFlow {
+//            lazyGridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+//        }
+//            .distinctUntilChanged()
+//            .collect { lastVisibleIndex ->
+//                if (lastVisibleIndex == uiState.pokemons.lastIndex && currentFilter.selectedTypes.isEmpty() && uiState.searchQuery == "") {
+//                    println("Screen: Reached end of list, loading more items")
+//                    onLoadNextItems()
+//                }
+//            }
+//    }
 
     LaunchedEffect(uiState) {
         println("Loading state changed to: ${uiState.isLoading}, isEmpty: ${uiState.isEmpty}")
@@ -106,7 +109,7 @@ fun PokemonListScreen(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
-            isRefreshing = uiState.isLoading,
+            isRefreshing = uiState.isLoading || isPagingLoading,
             onRefresh = {
                 onClearFilter()
                 onRefresh()
@@ -148,17 +151,24 @@ fun PokemonListScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(
-                            pagedPokemons?.itemCount ?: 0,
-                            key = {
-                                it
+                        if (currentFilter.selectedTypes.isNotEmpty() || currentFilter.sortOption != PokemonSortOption.NUMBER
+                            || uiState.searchQuery.isNotEmpty()
+                        ) {
+                            println("Screen: Filter changed to: NOT paged data $currentFilter")
+                            items(uiState.pokemons) { pokemon ->
+                                PokemonCard(pokemon = pokemon)
                             }
-                            //uiState.pokemons
-                        ) { index ->
-                            //pokemon ->
-                            pagedPokemons?.get(index)?.let { pokemon ->
-
-                                PokemonCard(pokemon = pokemon.toDomain())
+                        } else {
+                            println("Screen: Filter changed to: paged data $currentFilter")
+                            items(
+                                pagedPokemons?.itemCount ?: 0,
+                                key = {
+                                    it
+                                }
+                            ) { index ->
+                                pagedPokemons?.get(index)?.let { pokemon ->
+                                    PokemonCard(pokemon = pokemon.toDomain())
+                                }
                             }
                         }
                     }
@@ -203,7 +213,7 @@ private fun PokemonListScreenPreview() {
                 searchQuery = ""
             ),
             onApplyFilter = {},
-            onLoadNextItems = {},
+            //onLoadNextItems = {},
             onClearFilter = {},
             onSearchQueryChange = {},
             pagedPokemons = null
@@ -227,7 +237,7 @@ private fun PokemonListScreenLoadingPreview() {
                 searchQuery = ""
             ),
             onApplyFilter = {},
-            onLoadNextItems = {},
+            //onLoadNextItems = {},
             onClearFilter = {},
             onSearchQueryChange = {},
             pagedPokemons = null

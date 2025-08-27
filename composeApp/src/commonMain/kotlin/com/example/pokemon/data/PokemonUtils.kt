@@ -8,6 +8,18 @@ object PokemonUtils {
     const val POKEMON_PER_PAGE = 20
     const val TOTAL_POKEMON_COUNT = 1000
 
+    fun extractOffsetFromUrl(url: String?): Int? {
+        if (url == null) return null
+
+        return try {
+            val firstList = url.split("&")
+            val secondList = firstList[0].split("=")
+            secondList[1].toInt()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun calculateOffset(page: Int): Int {
         return page * POKEMON_PER_PAGE
     }

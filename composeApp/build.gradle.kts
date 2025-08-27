@@ -18,7 +18,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -29,7 +29,7 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -38,8 +38,9 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
-            implementation(libs.androidx.paging.runtime)
-            implementation(libs.androidx.paging.compose)
+
+            implementation(libs.paging.android)
+
         }
 
         commonMain.dependencies {
@@ -64,19 +65,31 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
 
             //Paging
-            implementation(libs.paging.common)
-            implementation(libs.paging.compose.common)
+            implementation(libs.paging.multiplatform.common)
+            implementation(libs.paging.multiplatform.compose.common)
             implementation(libs.androidx.room.paging)
 
         }
         nativeMain.dependencies {
             implementation(libs.ktor.client.darwin)
-            implementation(libs.paging.runtime.uikit)
 
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        iosMain.dependencies {
+            implementation(libs.paging.uikit)
+        }
+//        iosArm64Main.dependencies {
+//            implementation(libs.paging.runtime.uikit)
+//        }
+//        iosSimulatorArm64Main.dependencies {
+//            implementation(libs.paging.runtime.uikit)
+//        }
+//        iosX64Main.dependencies {
+//            implementation(libs.paging.runtime.uikit)
+//
+//        }
     }
 }
 

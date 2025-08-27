@@ -1,6 +1,5 @@
 package com.example.pokemon.domain.interfaces
 
-import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -15,7 +14,7 @@ interface PokemonDao {
     fun getPokemonsWithPagination(limit: Int, offset: Int): Flow<List<PokemonEntity>>
 
     @Query("SELECT * FROM pokemons ORDER BY id ASC")
-    fun getPokemonsWithPagingSource(): PagingSource<Int, PokemonEntity>
+    fun getPokemonsWithPagingSource(): app.cash.paging.PagingSource<Int, PokemonEntity>
 
     @Query("SELECT * FROM pokemons ORDER BY id ASC")
     fun getPokemonsWithoutPagination(): Flow<List<PokemonEntity>>

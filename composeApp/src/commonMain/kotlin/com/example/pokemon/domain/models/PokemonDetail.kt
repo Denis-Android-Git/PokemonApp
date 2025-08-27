@@ -30,7 +30,7 @@ data class PokemonDetailResponse(
 data class PokemonAbility(
     val is_hidden: Boolean,
     val slot: Int,
-    val ability: NamedApiResource
+    val ability: NamedApiResource?
 )
 
 @Serializable

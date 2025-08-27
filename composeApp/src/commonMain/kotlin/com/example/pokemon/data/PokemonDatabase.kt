@@ -15,6 +15,7 @@ abstract class PokemonDatabase : RoomDatabase() {
     abstract fun pokemonDao(): PokemonDao
 }
 
+@Suppress("NO_ACTUAL_FOR_EXPECT")
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<PokemonDatabase> {
     override fun initialize(): PokemonDatabase
 }

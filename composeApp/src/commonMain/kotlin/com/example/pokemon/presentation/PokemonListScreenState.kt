@@ -3,7 +3,6 @@ package com.example.pokemon.presentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.cash.paging.compose.collectAsLazyPagingItems
 import com.example.pokemon.domain.models.PokemonFilter
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -26,9 +25,9 @@ fun PokemonListScreenState(
         onApplyFilter = {
             viewModel.applyFilter(it)
         },
-        onLoadNextItems = {
-            viewModel.loadNextItems()
-        },
+//        onLoadNextItems = {
+//            //viewModel.loadNextItems()
+//        },
         onClearFilter = {
             viewModel.clearFilter()
         },

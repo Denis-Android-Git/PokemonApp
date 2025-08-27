@@ -1,14 +1,12 @@
 package com.example.pokemon.data
 
 import androidx.paging.ExperimentalPagingApi
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
+import app.cash.paging.Pager
 import com.example.pokemon.domain.interfaces.PokemonDao
 import com.example.pokemon.domain.interfaces.PokemonService
 import com.example.pokemon.domain.models.NamedApiResource
-import com.example.pokemon.domain.models.PokemonDetailResponse
 import com.example.pokemon.domain.models.Pokemon
+import com.example.pokemon.domain.models.PokemonDetailResponse
 import com.example.pokemon.domain.models.PokemonResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -19,12 +17,12 @@ class PokemonRepositoryImpl(
 ) : PokemonRepository {
 
     @OptIn(ExperimentalPagingApi::class)
-    override fun getPagedPokemonsFromDbViaNetwork(pageSize: Int) = Pager(
-        config = PagingConfig(pageSize),
+    override fun getPagedPokemonsFromDbViaNetwork(pageSize: Int) = app.cash.paging.Pager(
+        config = app.cash.paging.PagingConfig(pageSize),
         remoteMediator = MyRemoteMediator(pokemonDao, pokemonService)
     ) {
         pokemonDao.getPokemonsWithPagingSource()
-    }.flow
+    }
 
     override fun getPokemons(offset: Int, limit: Int, search: String?): Flow<List<Pokemon>> {
         return if (search.isNullOrBlank()) {
@@ -102,7 +100,7 @@ class PokemonRepositoryImpl(
 interface PokemonRepository {
     fun getPagedPokemonsFromDbViaNetwork(
         pageSize: Int
-    ): Flow<PagingData<PokemonEntity>>
+    ): Pager<Int, PokemonEntity>
 
     fun getPokemons(offset: Int, limit: Int, search: String? = null): Flow<List<Pokemon>>
 
