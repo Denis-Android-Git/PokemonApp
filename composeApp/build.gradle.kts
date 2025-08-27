@@ -78,7 +78,7 @@ kotlin {
             implementation(libs.kotlin.test)
         }
         iosMain.dependencies {
-            implementation(libs.paging.uikit)
+            //implementation(libs.paging.uikit)
         }
 //        iosArm64Main.dependencies {
 //            implementation(libs.paging.runtime.uikit)
