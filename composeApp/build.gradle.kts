@@ -80,16 +80,6 @@ kotlin {
         iosMain.dependencies {
             //implementation(libs.paging.uikit)
         }
-//        iosArm64Main.dependencies {
-//            implementation(libs.paging.runtime.uikit)
-//        }
-//        iosSimulatorArm64Main.dependencies {
-//            implementation(libs.paging.runtime.uikit)
-//        }
-//        iosX64Main.dependencies {
-//            implementation(libs.paging.runtime.uikit)
-//
-//        }
     }
 }
 
